@@ -1,0 +1,236 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #0a0a0a; /* Deep Black */
+  --foreground: #ffffff; /* Text Primary */
+  --card: #141414; /* Card Background */
+  --card-foreground: #ffffff;
+  --popover: #141414;
+  --popover-foreground: #ffffff;
+  --primary: #00d9ff; /* Accent Primary (CTA) */
+  --primary-foreground: #0a0a0a; /* Dark text on cyan */
+  --secondary: #1a1a1a; /* Secondary background surfaces */
+  --secondary-foreground: #ffffff;
+  --muted: #1a1a1a;
+  --muted-foreground: #a0a0a0; /* Text Secondary */
+  --accent: #00b8d4; /* Accent Secondary (darker cyan) */
+  --accent-foreground: #0a0a0a;
+  --destructive: #ff3366; /* Error */
+  --destructive-foreground: #0a0a0a;
+  --border: #2a2a2a; /* Inputs & borders */
+  --input: #2a2a2a;
+  --ring: #00d9ff; /* Focus ring */
+  --chart-1: #00d9ff; /* Use brand cyan + neutrals */
+  --chart-2: #00b8d4;
+  --chart-3: #1f9fb6;
+  --chart-4: #2a2a2a;
+  --chart-5: #3a3a3a;
+  --radius: 0.625rem;
+  --sidebar: #0f0f0f;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #00d9ff;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #2a2a2a;
+  --sidebar-ring: #00d9ff;
+}
+
+.dark {
+  --background: #1a1a1a;
+  --foreground: #a0a0a0;
+  --card: #2a2a2a;
+  --card-foreground: #ffffff;
+  --popover: #2a2a2a;
+  --popover-foreground: #ffffff;
+  --primary: #00b8d4;
+  --primary-foreground: #ffffff;
+  --secondary: #3a3a3a;
+  --secondary-foreground: #ffffff;
+  --muted: #3a3a3a;
+  --muted-foreground: #ffffff;
+  --accent: #00d9ff;
+  --accent-foreground: #ffffff;
+  --destructive: #ff3366;
+  --destructive-foreground: #ffffff;
+  --border: #4a4a4a;
+  --input: #4a4a4a;
+  --ring: #00b8d4;
+  --chart-1: #00b8d4;
+  --chart-2: #00d9ff;
+  --chart-3: #1f9fb6;
+  --chart-4: #3a3a3a;
+  --chart-5: #2a2a2a;
+  --sidebar: #1f1f1f;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #00b8d4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #3a3a3a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #4a4a4a;
+  --sidebar-ring: #00b8d4;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  @keyframes floatY {
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  @keyframes slowPulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+    50% {
+      box-shadow: 0 0 40px 0 var(--color-primary);
+    }
+  }
+
+  @keyframes drift {
+    0% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    50% {
+      transform: translate(6px, -8px) rotate(2deg);
+    }
+    100% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+  }
+
+  @keyframes slowRotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .motion-rotate-slow {
+    animation: slowRotate 36s linear infinite;
+  }
+
+  @keyframes glowBreath {
+    0%,
+    100% {
+      opacity: 0.45;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.06);
+    }
+  }
+  .motion-glow {
+    animation: glowBreath 6s ease-in-out infinite;
+  }
+
+  .card-border {
+    /* subtle glassy card using tokens */
+    @apply border border-border bg-secondary/60 backdrop-blur-sm;
+  }
+
+  /* full-screen grid backdrop with radial mask */
+  .grid-backdrop {
+    background-image: linear-gradient(
+        to right,
+        color-mix(in oklab, var(--color-border) 60%, transparent) 1px,
+        transparent 1px
+      ), linear-gradient(to bottom, color-mix(in oklab, var(--color-border) 60%, transparent) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse at center, black 55%, transparent 80%);
+    opacity: 0.22;
+  }
+
+  .animate-float-slow {
+    animation: floatY 6s ease-in-out infinite;
+  }
+  .animate-float-medium {
+    animation: floatY 4.5s ease-in-out infinite;
+  }
+  .animate-float-fast {
+    animation: floatY 3.2s ease-in-out infinite;
+  }
+  .animate-drift {
+    animation: drift 8s ease-in-out infinite;
+  }
+  .glow-ring {
+    box-shadow: 0 0 0 1px var(--color-ring);
+  }
+  .glow-pulse {
+    animation: slowPulse 3.6s ease-in-out infinite;
+  }
+
+  /* Overlay grid for hero background */
+  .grid-overlay {
+    background-image: linear-gradient(
+        to right,
+        color-mix(in oklab, var(--color-border) 60%, transparent) 1px,
+        transparent 1px
+      ), linear-gradient(to bottom, color-mix(in oklab, var(--color-border) 60%, transparent) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(ellipse at center, black 55%, transparent 80%);
+    opacity: 0.25;
+  }
+}

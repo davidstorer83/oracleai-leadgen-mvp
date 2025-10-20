@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coaches Coach[]
+  chats   Chat[]
+
+  @@map("users")
+}
+
+model Coach {
+  id              String   @id @default(cuid())
+  name            String
+  email           String?  // New field for coach's email
+  description     String?
+  channelUrl      String
+  channelId       String?
+  channelName     String?
+  avatar          String?
+  tone            String?  @default("friendly, helpful, and knowledgeable") // How the AI should communicate
+  creativityLevel Float?   @default(0.7) // New field for creativity level
+  status          String   @default("PENDING")
+  trainingData    String?  // JSON string of training data
+  openaiModel      String? // Custom OpenAI model ID if fine-tuned
+  metadata        String?  // JSON string for additional channel data
+  shareableId     String?  @unique // Unique ID for shareable links
+  isPublic        Boolean  @default(false) // Whether coach is publicly shareable
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  videos     Video[]
+  chats      Chat[]
+  trainingJobs TrainingJob[]
+  leads      Lead[]
+
+  @@map("coaches")
+}
+
+model Video {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  videoId     String   @unique
+  url         String
+  thumbnail   String?
+  duration    Int? // in seconds
+  publishedAt DateTime?
+  transcript  String?
+  summary     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  coachId String
+  coach   Coach  @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@map("videos")
+}
+
+model TrainingJob {
+  id        String        @id @default(cuid())
+  status    String        @default("PENDING")
+  progress  Int           @default(0) // 0-100
+  error     String?
+  startedAt DateTime?
+  completedAt DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  coachId String
+  coach   Coach @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@map("training_jobs")
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  phone     String?
+  source    String   @default("chat") // chat, embed, landing, etc.
+  status    String   @default("new") // new, contacted, qualified, converted
+  notes     String?
+  metadata  String?  // JSON string for additional data
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  coachId String
+  coach   Coach @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  @@map("leads")
+}
+
+model Chat {
+  id        String   @id @default(cuid())
+  title     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  coachId String
+  coach   Coach  @relation(fields: [coachId], references: [id], onDelete: Cascade)
+
+  messages Message[]
+
+  @@map("chats")
+}
+
+model Message {
+  id        String      @id @default(cuid())
+  content   String
+  role      String
+  createdAt DateTime    @default(now())
+
+  chatId String
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
