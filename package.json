@@ -3,13 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "next build",
     "dev": "next dev",
-    "lint": "eslint .",
+    "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
-    "setup": "node scripts/setup.js",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
     "db:studio": "prisma studio"
   },
   "dependencies": {
