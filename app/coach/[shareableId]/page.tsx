@@ -95,35 +95,35 @@ export default async function PublicCoachPage({ params }: PublicCoachPageProps) 
               <CardContent className="space-y-6">
                 {/* Channel Stats */}
                 <div className="grid grid-cols-1 gap-3">
-                  {metadata.subscriberCount && (
+                {metadata.subscriberCount && (
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-blue-600" />
                         <span className="text-sm font-medium text-gray-700">Subscribers</span>
                       </div>
                       <span className="text-sm font-bold text-gray-900">{metadata.subscriberCount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  
-                  {metadata.videoCount && (
+                  </div>
+                )}
+                
+                {metadata.videoCount && (
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Video className="w-4 h-4 text-purple-600" />
                         <span className="text-sm font-medium text-gray-700">Videos</span>
                       </div>
                       <span className="text-sm font-bold text-gray-900">{metadata.videoCount}</span>
-                    </div>
-                  )}
+                  </div>
+                )}
 
-                  {coach.createdAt && (
+                {coach.createdAt && (
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-green-600" />
                         <span className="text-sm font-medium text-gray-700">Trained</span>
                       </div>
                       <span className="text-sm font-bold text-gray-900">{new Date(coach.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  )}
+                  </div>
+                )}
                 </div>
 
                 {/* Description */}
@@ -161,18 +161,18 @@ export default async function PublicCoachPage({ params }: PublicCoachPageProps) 
                   <div className="grid grid-cols-2 gap-3 mt-4">
                     <ShareButton shareUrl={shareUrl} />
 
-                    {coach.channelUrl && (
-                      <Button 
+                  {coach.channelUrl && (
+                    <Button 
                         variant="outline" 
                         className="w-full h-10 border-gray-300 hover:border-gray-400"
-                        asChild
-                      >
-                        <a href={coach.channelUrl} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4 mr-2" />
+                      asChild
+                    >
+                      <a href={coach.channelUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="w-4 h-4 mr-2" />
                           Original Channel
-                        </a>
-                      </Button>
-                    )}
+                      </a>
+                    </Button>
+                  )}
                   </div>
                 </div>
               </CardContent>
@@ -214,8 +214,8 @@ export default async function PublicCoachPage({ params }: PublicCoachPageProps) 
                     </div>
                     <p className="text-sm text-blue-700">
                       This is an AI-powered version for educational and entertainment purposes. 
-                      It's not affiliated with or endorsed by the original creator.
-                    </p>
+                    It's not affiliated with or endorsed by the original creator.
+                  </p>
                   </div>
                 </div>
               </CardContent>
