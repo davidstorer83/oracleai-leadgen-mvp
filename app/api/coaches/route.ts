@@ -362,9 +362,9 @@ export async function startTrainingProcess(coachId: string) {
 
     // Fetch comprehensive YouTube channel data
     const youtubeData = await Promise.race([
-      getYouTubeChannelData(coach.channelUrl, 50),
+      getYouTubeChannelData(coach.channelUrl, 50), // Increased to 50 videos for maximum comprehensive knowledge
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('YouTube data fetching timeout')), 600000) // 10 minute timeout
+        setTimeout(() => reject(new Error('YouTube data fetching timeout')), 240000) // 4 minute timeout for 50 videos
       )
     ])
     
@@ -404,20 +404,20 @@ export async function startTrainingProcess(coachId: string) {
     
     for (const video of youtubeData.videos) {
       try {
-        const savedVideo = await prisma.video.create({
-          data: {
-            title: video.title,
-            description: video.description,
-            videoId: video.id,
-            url: video.url,
-            thumbnail: video.thumbnail,
-            duration: parseDurationToSeconds(video.duration),
+          const savedVideo = await prisma.video.create({
+            data: {
+              title: video.title,
+              description: video.description,
+              videoId: video.id,
+              url: video.url,
+              thumbnail: video.thumbnail,
+              duration: parseDurationToSeconds(video.duration),
             publishedAt: new Date(video.publishedAt),
             transcript: (video as any).transcript || '',
-            coachId,
-          },
-        })
-        processedVideos.push(savedVideo)
+              coachId,
+            },
+          })
+          processedVideos.push(savedVideo)
       } catch (error) {
         // Continue with other videos even if one fails
       }
@@ -433,7 +433,7 @@ export async function startTrainingProcess(coachId: string) {
     const trainingData = await Promise.race([
       createTrainingData(coachId),
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Training data generation timeout')), 600000) // 10 minute timeout
+        setTimeout(() => reject(new Error('Training data generation timeout')), 120000) // 2 minute timeout for 50 videos
       )
     ])
     
@@ -442,10 +442,15 @@ export async function startTrainingProcess(coachId: string) {
     }
     
     
+    // Generate system prompt instantly (no API calls)
+    console.log(`⚡ Generating system prompt instantly...`)
+    console.log(`⏱️ Estimated time: 30 seconds`)
+    console.log(`📊 Progress: Creating professional system prompt...`)
+    
     const systemPrompt = await Promise.race([
       generateSystemPrompt(trainingData),
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('System prompt generation timeout')), 300000) // 5 minute timeout
+        setTimeout(() => reject(new Error('System prompt generation timeout')), 30000) // 30 second timeout
       )
     ])
     
@@ -455,10 +460,19 @@ export async function startTrainingProcess(coachId: string) {
       systemPrompt,
     })
 
+    // Also store system prompt in metadata for public API access
+    const metadataJson = JSON.stringify({
+      systemPrompt,
+      channelInfo: trainingData.channelInfo,
+      totalVideos: trainingData.videos.length,
+      generatedAt: new Date().toISOString()
+    })
+
     await prisma.coach.update({
       where: { id: coachId },
       data: {
         trainingData: trainingDataJson,
+        metadata: metadataJson,
         status: 'READY',
       },
     })

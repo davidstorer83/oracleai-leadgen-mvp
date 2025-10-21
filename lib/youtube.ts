@@ -495,7 +495,7 @@ export async function getYouTubeChannelData(channelUrl: string, maxVideos: numbe
 
     const videos = await getChannelVideos(channelUrl, maxVideos)
     const videosWithTranscripts = []
-    const maxTranscripts = Math.min(15, videos.length)
+    const maxTranscripts = Math.min(50, videos.length) // Increased to 50 for maximum comprehensive knowledge
     
     for (let i = 0; i < maxTranscripts; i++) {
       const video = videos[i]

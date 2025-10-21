@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/avatar"
 import { Loader, ChatLoader, PageLoader } from "@/components/ui/loader"
 import { ArrowLeft, Send } from "lucide-react"
 import Link from "next/link"
+import ReactMarkdown from 'react-markdown'
 
 type Msg = { role: "user" | "assistant"; content: string }
 
@@ -174,7 +175,9 @@ export default function ChatPage() {
                   ? "bg-primary text-primary-foreground" 
                   : "bg-muted text-muted-foreground"
               }`}>
-                <div className="whitespace-pre-wrap">{m.content}</div>
+                <div className="prose prose-sm max-w-none leading-relaxed prose-headings:font-semibold prose-p:mb-3 prose-ul:mb-3 prose-ol:mb-3">
+                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                </div>
               </div>
             </div>
           ))}

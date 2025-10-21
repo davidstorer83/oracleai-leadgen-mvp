@@ -192,10 +192,19 @@ export async function POST(req: Request) {
       systemPrompt,
     })
 
+    // Also store system prompt in metadata for public API access
+    const metadataJson = JSON.stringify({
+      systemPrompt,
+      channelInfo: trainingData.channelInfo,
+      totalVideos: trainingData.videos.length,
+      generatedAt: new Date().toISOString()
+    })
+
     await prisma.coach.update({
       where: { id: coachId },
       data: {
         trainingData: trainingDataJson,
+        metadata: metadataJson,
         status: 'READY',
       },
     })
