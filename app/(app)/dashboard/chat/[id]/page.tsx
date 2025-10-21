@@ -33,26 +33,20 @@ So whatever question you have — ask me.
 Let's figure it out together and build the life you dream of.`
   }
   
-  // Create a more professional and varied greeting
-  const greetings = [
-    `Hello! I'm ${name}. I'm here to help you with questions and insights based on my expertise and experience.`,
-    `Hi there! I'm ${name}. I'd be happy to share my knowledge and help you with any questions you might have.`,
-    `Hey! I'm ${name}. I'm excited to chat and share insights from my experience. What would you like to know?`,
-    `Welcome! I'm ${name}. I'm here to help you learn and grow through our conversation.`
-  ]
+  // Default greeting for other coaches - present as the real person
+  let greeting = `Hi! I'm ${name}. `
   
-  // Select a random greeting to avoid repetition
-  const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)]
-  
-  // Add specific context if available
-  let context = ""
-  if (description && description.length > 10) {
-    context = ` I specialize in ${description.toLowerCase()}.`
-  } else if (channelName) {
-    context = ` I'm passionate about ${channelName} and helping people grow.`
+  if (description) {
+    greeting += `I love talking about ${description.toLowerCase()}. `
   }
   
-  return randomGreeting + context + " What's on your mind?"
+  if (channelName) {
+    greeting += `I'm passionate about sharing insights on ${channelName} and helping people grow. `
+  }
+  
+  greeting += `I'm ${tone} and always excited to chat about new ideas and experiences. What's on your mind?`
+  
+  return greeting
 }
 
 export default function ChatPage() {

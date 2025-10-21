@@ -28,6 +28,7 @@ export default function CoachDetailPage() {
   const [isTogglingShare, setIsTogglingShare] = useState(false)
 
   const coach = data?.coach
+  console.log("coach", coach)
   const trainingJobs = trainingData?.trainingJobs || []
   const latestJob = trainingJobs[0]
 

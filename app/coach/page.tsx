@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar } from '@/components/ui/avatar'
 import { MessageCircle, Users, Video, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 
@@ -57,12 +57,12 @@ export default async function PublicCoachesPage() {
                 <Card key={coach.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="text-center">
                     <div className="flex justify-center mb-4">
-                      <Avatar className="w-16 h-16">
-                        <AvatarImage src={coach.avatar || ''} alt={coach.name} />
-                        <AvatarFallback className="text-lg">
-                          {coach.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <Avatar 
+                        src={coach.avatar || ''} 
+                        alt={coach.name}
+                        fallback={coach.name.charAt(0)}
+                        className="w-16 h-16"
+                      />
                     </div>
                     <CardTitle className="text-xl">{coach.name}</CardTitle>
                     <CardDescription className="text-base">

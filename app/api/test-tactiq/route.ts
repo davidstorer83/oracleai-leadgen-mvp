@@ -9,9 +9,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Video ID is required' }, { status: 400 })
     }
 
+    console.log(`🔍 Testing Tactiq API transcript extraction for: ${videoId}`)
+    
     const transcript = await getVideoTranscriptTactiq(videoId)
     
     if (transcript) {
+      console.log(`✅ Tactiq API transcript extracted: ${transcript.length} characters`)
       
       return NextResponse.json({
         success: true,

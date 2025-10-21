@@ -9,6 +9,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Video ID is required' }, { status: 400 })
     }
 
+    console.log(`🧪 Testing transcript methods for video: ${videoId}`)
+    
     const results: any = {
       videoId,
       methods: {}
@@ -16,6 +18,7 @@ export async function POST(req: Request) {
 
     // Test primary method
     if (method === 'all' || method === 'primary') {
+      console.log(`📝 Testing primary transcript method...`)
       try {
         const startTime = Date.now()
         const transcript = await getVideoTranscript(videoId)
@@ -38,6 +41,7 @@ export async function POST(req: Request) {
 
     // Test alternative method
     if (method === 'all' || method === 'alternative') {
+      console.log(`📝 Testing alternative transcript method...`)
       try {
         const startTime = Date.now()
         const transcript = await getVideoTranscriptAlternative(videoId)
@@ -60,6 +64,7 @@ export async function POST(req: Request) {
 
     // Test retry method
     if (method === 'all' || method === 'retry') {
+      console.log(`📝 Testing retry transcript method...`)
       try {
         const startTime = Date.now()
         const transcript = await getVideoTranscriptWithRetry(videoId, 2)
@@ -90,6 +95,7 @@ export async function POST(req: Request) {
       hasTranscript: successfulMethods.length > 0
     }
 
+    console.log(`📊 Transcript test results:`, results.summary)
 
     return NextResponse.json({
       success: true,
