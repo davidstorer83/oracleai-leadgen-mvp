@@ -53,10 +53,10 @@ export async function POST(request: NextRequest) {
         const metadata = JSON.parse(coach.metadata)
         if (metadata.systemPrompt) {
           systemPrompt = metadata.systemPrompt
-        } else {
         }
       }
     } catch (e) {
+      // Error parsing metadata
     }
 
     // Check if coach has training data
@@ -68,13 +68,10 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    
-    // Calculate estimated tokens (rough approximation: 1 token ≈ 4 characters)
     const systemPromptTokens = Math.ceil(systemPrompt.length / 4)
     const userMessageTokens = Math.ceil(message.length / 4)
     const totalInputTokens = systemPromptTokens + userMessageTokens
     const maxOutputTokens = 500
-    
 
     let completion
     try {
@@ -95,18 +92,14 @@ export async function POST(request: NextRequest) {
 
     const response = completion.choices[0]?.message?.content || 'I apologize, but I cannot process your request at the moment.'
     
-    // Log actual token usage from OpenAI response
     const actualInputTokens = completion.usage?.prompt_tokens || totalInputTokens
     const actualOutputTokens = completion.usage?.completion_tokens || 0
     const actualTotalTokens = completion.usage?.total_tokens || (totalInputTokens + maxOutputTokens)
     
-    
-    // Cost estimation for GPT-3.5-turbo
     const model = completion.model || 'gpt-3.5-turbo'
     const inputCost = actualInputTokens * 0.001 / 1000  // $0.001 per 1K tokens
     const outputCost = actualOutputTokens * 0.002 / 1000  // $0.002 per 1K tokens
     const totalCost = inputCost + outputCost
-    
 
     return NextResponse.json({ message: response })
   } catch (error) {

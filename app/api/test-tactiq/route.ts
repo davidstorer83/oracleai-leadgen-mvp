@@ -9,7 +9,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Video ID is required' }, { status: 400 })
     }
 
-    
     const transcript = await getVideoTranscriptTactiq(videoId)
     
     if (transcript) {

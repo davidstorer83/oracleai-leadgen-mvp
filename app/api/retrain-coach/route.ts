@@ -81,7 +81,7 @@ export async function POST(req: Request) {
         })
         processedVideos.push(savedVideo)
       } catch (error) {
-        console.error(`❌ Failed to save video: ${video.title}`, error)
+        // Continue with other videos
       }
     }
 
@@ -146,7 +146,7 @@ export async function POST(req: Request) {
         await prisma.lead.create({ data: leadData })
       }
     } catch (leadError) {
-      console.error(`❌ Failed to update YouTube channel lead:`, leadError)
+      // Continue without failing
     }
 
     // Generate training data
@@ -158,7 +158,6 @@ export async function POST(req: Request) {
 
     // Generate system prompt
     const systemPrompt = await generateSystemPrompt(trainingData)
-    
 
     // Update coach with training data
     const trainingDataJson = JSON.stringify({
@@ -203,7 +202,6 @@ export async function POST(req: Request) {
       }
     })
   } catch (error) {
-    console.error('❌ Retraining failed:', error)
     
     // Update coach status to error
     await prisma.coach.update({

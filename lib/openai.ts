@@ -58,7 +58,6 @@ export async function generateVideoSummary(transcript: string, title: string): P
 
 export async function createTrainingData(coachId: string): Promise<TrainingData | null> {
   try {
-    
     const coach = await prisma.coach.findUnique({
       where: { id: coachId },
       include: {
@@ -69,8 +68,6 @@ export async function createTrainingData(coachId: string): Promise<TrainingData 
     if (!coach) {
       return null
     }
-    
-
     const videos = []
     for (const video of coach.videos) {
       if (video.transcript) {
@@ -86,10 +83,8 @@ export async function createTrainingData(coachId: string): Promise<TrainingData 
           publishedAt: video.publishedAt ? video.publishedAt.toISOString() : '',
           thumbnail: video.thumbnail || '',
         })
-      } else {
       }
     }
-    
 
     // Parse channel metadata if available
     let channelMetadata: any = {}
@@ -125,12 +120,10 @@ export async function createTrainingData(coachId: string): Promise<TrainingData 
 
 export async function generateSystemPrompt(trainingData: TrainingData): Promise<string> {
   try {
-    
     // Get the top 20 videos for maximum comprehensive knowledge
     const topVideos = trainingData.videos
       .filter(v => v.transcript && v.transcript.length > 0)
       .slice(0, 20) // 20 videos for maximum comprehensive knowledge
-    
     
     const channelInfo = trainingData.channelInfo
     
@@ -154,10 +147,8 @@ When responding, use professional formatting with bold text for emphasis. Use **
 
 If asked about topics not in your expertise, say "I focus on [your main topics] and would be happy to help with questions about those areas."`
 
-    
     return systemPrompt
   } catch (error) {
-    console.error('Error generating system prompt:', error)
     return ''
   }
 }
@@ -184,13 +175,11 @@ export async function chatWithCoach(
       { role: 'user' as const, content: message },
     ]
 
-    // Log token usage for dashboard chat
     const systemPromptTokens = Math.ceil(systemPrompt.length / 4)
     const userMessageTokens = Math.ceil(message.length / 4)
     const historyTokens = chatHistory.reduce((acc, msg) => acc + Math.ceil(msg.content.length / 4), 0)
     const totalInputTokens = systemPromptTokens + userMessageTokens + historyTokens
     const maxOutputTokens = 1000
-
 
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -199,18 +188,14 @@ export async function chatWithCoach(
       temperature: 0.7,
     })
 
-    // Log actual token usage
     const actualInputTokens = response.usage?.prompt_tokens || totalInputTokens
     const actualOutputTokens = response.usage?.completion_tokens || 0
     const actualTotalTokens = response.usage?.total_tokens || (totalInputTokens + maxOutputTokens)
     const responseContent = response.choices[0]?.message?.content || ''
 
-
-    // Cost estimation for GPT-3.5-turbo
     const inputCost = actualInputTokens * 0.001 / 1000  // $0.001 per 1K tokens
     const outputCost = actualOutputTokens * 0.002 / 1000  // $0.002 per 1K tokens
     const totalCost = inputCost + outputCost
-
 
     return responseContent
   } catch (error) {

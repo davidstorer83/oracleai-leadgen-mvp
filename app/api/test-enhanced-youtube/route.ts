@@ -9,7 +9,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Channel URL is required' }, { status: 400 })
     }
 
-    
     const youtubeData = await getYouTubeChannelData(channelUrl, maxVideos)
 
     return NextResponse.json({
