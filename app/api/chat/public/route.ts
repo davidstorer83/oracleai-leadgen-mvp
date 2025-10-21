@@ -53,13 +53,6 @@ export async function POST(request: NextRequest) {
         const metadata = JSON.parse(coach.metadata)
         if (metadata.systemPrompt) {
           systemPrompt = metadata.systemPrompt
-          console.log(`✅ Using pre-generated system prompt for ${coach.name} (${systemPrompt.length} characters)`)
-        } else {
-          console.log(`⚠️ No pre-generated system prompt found for ${coach.name}, using default`)
-        }
-      }
-    } catch (e) {
-      console.log(`❌ Error parsing metadata for ${coach.name}:`, e)
     }
 
     // Check if coach has training data
@@ -71,32 +64,11 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    console.log(`📊 Coach ${coach.name} has ${videosWithTranscripts.length} videos with transcripts`)
-    console.log(`📝 System prompt length: ${systemPrompt.length} characters`)
-    console.log(`📝 User message length: ${message.length} characters`)
-    
     // Calculate estimated tokens (rough approximation: 1 token ≈ 4 characters)
     const systemPromptTokens = Math.ceil(systemPrompt.length / 4)
     const userMessageTokens = Math.ceil(message.length / 4)
     const totalInputTokens = systemPromptTokens + userMessageTokens
     const maxOutputTokens = 500
-    
-    console.log(`🔢 Token estimation:`)
-    console.log(`   - System prompt: ${systemPromptTokens} tokens`)
-    console.log(`   - User message: ${userMessageTokens} tokens`)
-    console.log(`   - Total input: ${totalInputTokens} tokens`)
-    console.log(`   - Max output: ${maxOutputTokens} tokens`)
-    console.log(`   - Total per request: ${totalInputTokens + maxOutputTokens} tokens`)
-    console.log(`   - System prompt length: ${systemPrompt.length} characters`)
-    console.log(`   - User message length: ${message.length} characters`)
-    console.log(`   - Total input tokens: ${totalInputTokens}`)
-    console.log(`   - Max output tokens: ${maxOutputTokens}`)
-    console.log(`   - Total per request: ${totalInputTokens + maxOutputTokens}`)
-    console.log(`   - System prompt length: ${systemPrompt.length} characters`)
-    console.log(`   - User message length: ${message.length} characters`)
-    console.log(`   - Total input tokens: ${totalInputTokens}`)
-    console.log(`   - Max output tokens: ${maxOutputTokens}`)
-    console.log(`   - Total per request: ${totalInputTokens + maxOutputTokens}`)
 
     let completion
     try {
@@ -112,7 +84,6 @@ export async function POST(request: NextRequest) {
         frequency_penalty: 0.1
       })
     } catch (error: any) {
-      console.log(`⚠️ Error with gpt-3.5-turbo for ${coach.name}:`, error)
       throw error
     }
 
@@ -123,22 +94,11 @@ export async function POST(request: NextRequest) {
     const actualOutputTokens = completion.usage?.completion_tokens || 0
     const actualTotalTokens = completion.usage?.total_tokens || (totalInputTokens + maxOutputTokens)
     
-    console.log(`✅ Response generated:`)
-    console.log(`   - Actual input tokens: ${actualInputTokens}`)
-    console.log(`   - Actual output tokens: ${actualOutputTokens}`)
-    console.log(`   - Total tokens used: ${actualTotalTokens}`)
-    console.log(`   - Response length: ${response.length} characters`)
-    
     // Cost estimation for GPT-3.5-turbo
     const model = completion.model || 'gpt-3.5-turbo'
     const inputCost = actualInputTokens * 0.001 / 1000  // $0.001 per 1K tokens
     const outputCost = actualOutputTokens * 0.002 / 1000  // $0.002 per 1K tokens
     const totalCost = inputCost + outputCost
-    
-    console.log(`💰 Cost estimation (${model}):`)
-    console.log(`   - Input cost: $${inputCost.toFixed(6)}`)
-    console.log(`   - Output cost: $${outputCost.toFixed(6)}`)
-    console.log(`   - Total cost: $${totalCost.toFixed(6)}`)
 
     return NextResponse.json({ message: response })
   } catch (error) {

@@ -26,3 +26,4 @@ next-env.d.ts.env
 next-env.d.ts
 tsconfig.tsbuildinfo
 pnpm-lock.yaml
+.env

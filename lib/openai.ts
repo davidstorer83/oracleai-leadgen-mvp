@@ -58,8 +58,6 @@ export async function generateVideoSummary(transcript: string, title: string): P
 
 export async function createTrainingData(coachId: string): Promise<TrainingData | null> {
   try {
-    console.log(`🔍 Creating training data for coach: ${coachId}`)
-    
     const coach = await prisma.coach.findUnique({
       where: { id: coachId },
       include: {
@@ -68,22 +66,11 @@ export async function createTrainingData(coachId: string): Promise<TrainingData 
     })
 
     if (!coach) {
-      console.log(`❌ Coach not found: ${coachId}`)
       return null
     }
-    
-    console.log(`📊 Coach data:`, {
-      name: coach.name,
-      channelName: coach.channelName,
-      videosCount: coach.videos.length,
-      status: coach.status
-    })
-
-    console.log(`⚡ Processing ${coach.videos.length} videos instantly for training data`)
     const videos = []
     for (const video of coach.videos) {
       if (video.transcript) {
-        console.log(`📝 Processing video: ${video.title} (${video.transcript.length} characters)`)
         // Create instant summary without API calls
         const summary = `Educational content: ${video.title}. Key topics covered in this video.`
         videos.push({
@@ -96,13 +83,8 @@ export async function createTrainingData(coachId: string): Promise<TrainingData 
           publishedAt: video.publishedAt ? video.publishedAt.toISOString() : '',
           thumbnail: video.thumbnail || '',
         })
-        console.log(`✅ Processed video: ${video.title}`)
-      } else {
-        console.log(`❌ No transcript for video: ${video.title}`)
       }
     }
-    
-    console.log(`📊 Training data videos: ${videos.length} videos with transcripts`)
 
     // Parse channel metadata if available
     let channelMetadata: any = {}
@@ -138,14 +120,10 @@ export async function createTrainingData(coachId: string): Promise<TrainingData 
 
 export async function generateSystemPrompt(trainingData: TrainingData): Promise<string> {
   try {
-    console.log(`⚡ Generating professional system prompt (30 seconds max)`)
-    
     // Get the top 20 videos for maximum comprehensive knowledge
     const topVideos = trainingData.videos
       .filter(v => v.transcript && v.transcript.length > 0)
       .slice(0, 20) // 20 videos for maximum comprehensive knowledge
-    
-    console.log(`📊 Using ${topVideos.length} top videos for instant generation`)
     
     const channelInfo = trainingData.channelInfo
     
@@ -169,8 +147,6 @@ When responding, use professional formatting with bold text for emphasis. Use **
 
 If asked about topics not in your expertise, say "I focus on [your main topics] and would be happy to help with questions about those areas."`
 
-    console.log(`✅ Generated professional system prompt: ${systemPrompt.length} characters`)
-    
     return systemPrompt
   } catch (error) {
     console.error('Error generating system prompt:', error)
@@ -207,13 +183,6 @@ export async function chatWithCoach(
     const totalInputTokens = systemPromptTokens + userMessageTokens + historyTokens
     const maxOutputTokens = 1000
 
-    console.log(`🔢 Dashboard chat token estimation:`)
-    console.log(`   - System prompt: ${systemPromptTokens} tokens`)
-    console.log(`   - User message: ${userMessageTokens} tokens`)
-    console.log(`   - Chat history: ${historyTokens} tokens`)
-    console.log(`   - Total input: ${totalInputTokens} tokens`)
-    console.log(`   - Max output: ${maxOutputTokens} tokens`)
-
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages,
@@ -227,21 +196,10 @@ export async function chatWithCoach(
     const actualTotalTokens = response.usage?.total_tokens || (totalInputTokens + maxOutputTokens)
     const responseContent = response.choices[0]?.message?.content || ''
 
-    console.log(`✅ Dashboard chat response generated:`)
-    console.log(`   - Actual input tokens: ${actualInputTokens}`)
-    console.log(`   - Actual output tokens: ${actualOutputTokens}`)
-    console.log(`   - Total tokens used: ${actualTotalTokens}`)
-    console.log(`   - Response length: ${responseContent.length} characters`)
-
     // Cost estimation for GPT-3.5-turbo
     const inputCost = actualInputTokens * 0.001 / 1000  // $0.001 per 1K tokens
     const outputCost = actualOutputTokens * 0.002 / 1000  // $0.002 per 1K tokens
     const totalCost = inputCost + outputCost
-
-    console.log(`💰 Dashboard chat cost estimation (gpt-3.5-turbo):`)
-    console.log(`   - Input cost: $${inputCost.toFixed(6)}`)
-    console.log(`   - Output cost: $${outputCost.toFixed(6)}`)
-    console.log(`   - Total cost: $${totalCost.toFixed(6)}`)
 
     return responseContent
   } catch (error) {

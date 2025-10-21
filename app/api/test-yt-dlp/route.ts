@@ -9,12 +9,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Video ID is required' }, { status: 400 })
     }
 
-    console.log(`🔍 Testing yt-dlp transcript extraction for: ${videoId}`)
-    
     const transcript = await getVideoTranscriptYtDlp(videoId)
     
     if (transcript) {
-      console.log(`✅ yt-dlp transcript extracted: ${transcript.length} characters`)
       
       return NextResponse.json({
         success: true,
