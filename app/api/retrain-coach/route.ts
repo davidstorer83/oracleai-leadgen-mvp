@@ -11,7 +11,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Coach ID is required' }, { status: 400 })
     }
 
-    console.log(`🔄 Retraining coach: ${coachId}`)
 
     // Get coach data
     const coach = await prisma.coach.findUnique({
@@ -22,7 +21,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Coach not found' }, { status: 404 })
     }
 
-    console.log(`📊 Coach found: ${coach.name} (${coach.channelName})`)
 
     // Update coach status to training
     await prisma.coach.update({
@@ -31,15 +29,7 @@ export async function POST(req: Request) {
     })
 
     // Fetch fresh YouTube data
-    console.log(`📹 Fetching fresh YouTube data for: ${coach.channelUrl}`)
     const youtubeData = await getYouTubeChannelData(coach.channelUrl, 50)
-    
-    console.log(`📊 Fresh YouTube data:`, {
-      channelName: youtubeData.channelInfo.title,
-      totalVideos: youtubeData.totalVideosProcessed,
-      videosWithTranscripts: youtubeData.videos.length,
-      totalTranscripts: youtubeData.totalTranscriptsExtracted
-    })
 
     // Update channel metadata
     const channelMetadata = {
@@ -67,18 +57,15 @@ export async function POST(req: Request) {
     })
 
     // Delete existing videos
-    console.log(`🗑️ Deleting existing videos for coach: ${coachId}`)
     await prisma.video.deleteMany({
       where: { coachId },
     })
 
     // Save new videos with transcripts
-    console.log(`💾 Saving ${youtubeData.videos.length} videos to database`)
     const processedVideos = []
     
     for (const video of youtubeData.videos) {
       try {
-        console.log(`📝 Saving video: ${video.title}`)
         const savedVideo = await prisma.video.create({
           data: {
             title: video.title,
@@ -93,17 +80,14 @@ export async function POST(req: Request) {
           },
         })
         processedVideos.push(savedVideo)
-        console.log(`✅ Saved video: ${video.title} (ID: ${savedVideo.id})`)
       } catch (error) {
         console.error(`❌ Failed to save video: ${video.title}`, error)
       }
     }
 
-    console.log(`📊 Successfully saved ${processedVideos.length} videos`)
 
     // Update or create YouTube channel lead
     try {
-      console.log(`📝 Updating YouTube channel lead...`)
       
       // Check if YouTube channel lead already exists
       const existingLead = await prisma.lead.findFirst({
@@ -158,33 +142,23 @@ export async function POST(req: Request) {
           where: { id: existingLead.id },
           data: leadData
         })
-        console.log(`✅ Updated existing YouTube channel lead`)
       } else {
         await prisma.lead.create({ data: leadData })
-        console.log(`✅ Created new YouTube channel lead`)
       }
     } catch (leadError) {
       console.error(`❌ Failed to update YouTube channel lead:`, leadError)
     }
 
     // Generate training data
-    console.log(`🤖 Generating training data...`)
     const trainingData = await createTrainingData(coachId)
     
     if (!trainingData) {
       throw new Error("Failed to generate training data")
     }
 
-    console.log(`📊 Training data generated:`, {
-      videosCount: trainingData.videos.length,
-      channelName: trainingData.channelInfo.name
-    })
-
     // Generate system prompt
-    console.log(`📝 Generating system prompt...`)
     const systemPrompt = await generateSystemPrompt(trainingData)
     
-    console.log(`✅ System prompt generated (${systemPrompt.length} characters)`)
 
     // Update coach with training data
     const trainingDataJson = JSON.stringify({
@@ -209,7 +183,6 @@ export async function POST(req: Request) {
       },
     })
 
-    console.log(`🎉 Retraining completed successfully for coach: ${coachId}`)
 
     return NextResponse.json({
       success: true,

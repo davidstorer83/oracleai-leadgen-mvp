@@ -8,11 +8,9 @@ async function seedLeads() {
     const coach = await prisma.coach.findFirst()
     
     if (!coach) {
-      console.log('No coaches found. Please create a coach first.')
       return
     }
 
-    console.log(`Creating sample leads for coach: ${coach.name}`)
 
     const sampleLeads = [
       {
@@ -94,10 +92,8 @@ async function seedLeads() {
           createdAt: new Date(leadData.metadata ? JSON.parse(leadData.metadata).timestamp : new Date())
         }
       })
-      console.log(`Created lead: ${lead.name} (${lead.email})`)
     }
 
-    console.log('✅ Sample leads created successfully!')
   } catch (error) {
     console.error('Error seeding leads:', error)
   } finally {

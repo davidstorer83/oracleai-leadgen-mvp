@@ -9,12 +9,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Coach ID is required' }, { status: 400 })
     }
 
-    console.log(`🚀 Starting manual training process for coach: ${coachId}`)
     
     // Start the training process
     const result = await startTrainingProcess(coachId)
     
-    console.log(`✅ Training process completed for coach: ${coachId}`)
     
     return NextResponse.json({
       success: true,

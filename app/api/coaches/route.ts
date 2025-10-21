@@ -443,9 +443,6 @@ export async function startTrainingProcess(coachId: string) {
     
     
     // Generate system prompt instantly (no API calls)
-    console.log(`⚡ Generating system prompt instantly...`)
-    console.log(`⏱️ Estimated time: 30 seconds`)
-    console.log(`📊 Progress: Creating professional system prompt...`)
     
     const systemPrompt = await Promise.race([
       generateSystemPrompt(trainingData),

@@ -52,7 +52,7 @@ export default function Page() {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost" className="text-white hover:bg-secondary">
+                  <Button variant="ghost" className="text-white">
                     Sign in
                   </Button>
                 </Link>
