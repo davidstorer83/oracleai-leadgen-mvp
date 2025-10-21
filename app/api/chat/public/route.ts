@@ -53,6 +53,10 @@ export async function POST(request: NextRequest) {
         const metadata = JSON.parse(coach.metadata)
         if (metadata.systemPrompt) {
           systemPrompt = metadata.systemPrompt
+        }
+      }
+    } catch (e) {
+      // Use default system prompt if metadata parsing fails
     }
 
     // Check if coach has training data
