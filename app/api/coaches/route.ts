@@ -148,28 +148,24 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
     const body = await req.json()
     const { name, email, channelUrl, description, tone, creativityLevel } = body
-
     if (!name || !email || !channelUrl) {
-      return NextResponse.json({ error: 'Name, Email, and channel URL are required' }, { status: 400 })
+      return NextResponse.json({ error: 'Name, Email, and Channel ID are required' }, { status: 400 })
     }
 
-    // Extract channel ID from URL
-    const channelId = extractChannelId(channelUrl)
-    if (!channelId) {
-      return NextResponse.json({ error: 'Invalid YouTube channel URL' }, { status: 400 })
+    // Check if YouTube API key is available
+    if (!process.env.YOUTUBE_API_KEY) {
+      return NextResponse.json({ error: 'YouTube API key is not configured' }, { status: 500 })
     }
 
-    // Get channel info
+    // Use the channel URL directly - no need to extract or convert
     const channelInfo = await getYouTubeChannelData(channelUrl, 1)
 
     if (!channelInfo || !channelInfo.channelInfo) {
       return NextResponse.json({ error: 'Could not fetch channel information' }, { status: 400 })
     }
 
-    // Create coach
     const coach = await prisma.coach.create({
       data: {
         name,
@@ -276,15 +272,18 @@ export async function POST(req: Request) {
       // Don't fail coach creation if lead creation fails
     }
 
-    // Start training process in background (non-blocking)
-    setImmediate(() => {
+    // Start training process immediately
       startTrainingProcess(coach.id).catch(error => {
-      })
+      console.error('Training process failed:', error)
     })
 
     return NextResponse.json({ ok: true, coach })
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create coach' }, { status: 500 })
+    console.error('Coach creation error:', error)
+    return NextResponse.json({ 
+      error: 'Failed to create coach', 
+      details: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 })
   }
 }
 
@@ -362,11 +361,17 @@ export async function startTrainingProcess(coachId: string) {
 
     // Fetch comprehensive YouTube channel data
     const youtubeData = await Promise.race([
-      getYouTubeChannelData(coach.channelUrl, 50), // Increased to 50 videos for maximum comprehensive knowledge
+      getYouTubeChannelData(coach.channelUrl, 50), // Process up to 50 videos for comprehensive training
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('YouTube data fetching timeout')), 240000) // 4 minute timeout for 50 videos
+        setTimeout(() => reject(new Error('YouTube data fetching timeout')), 900000) // 15 minute timeout for 50 videos
       )
     ])
+
+    // Debug: Log the YouTube data being fetched
+    console.log('YouTube data fetched:', JSON.stringify({
+      channelInfo: youtubeData.channelInfo,
+      videosCount: youtubeData.videos?.length || 0
+    }, null, 2))
     
     
     await prisma.trainingJob.update({
@@ -389,6 +394,9 @@ export async function startTrainingProcess(coachId: string) {
       customUrl: youtubeData.channelInfo.customUrl,
       country: youtubeData.channelInfo.country,
     }
+
+    // Debug: Log the channel metadata being saved
+    console.log('Saving channel metadata:', JSON.stringify(channelMetadata, null, 2))
 
     await prisma.coach.update({
       where: { id: coachId },
@@ -433,7 +441,7 @@ export async function startTrainingProcess(coachId: string) {
     const trainingData = await Promise.race([
       createTrainingData(coachId),
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Training data generation timeout')), 120000) // 2 minute timeout for 50 videos
+        setTimeout(() => reject(new Error('Training data generation timeout')), 300000) // 5 minute timeout for 50 videos
       )
     ])
     
@@ -442,12 +450,10 @@ export async function startTrainingProcess(coachId: string) {
     }
     
     
-    // Generate system prompt instantly (no API calls)
-    
     const systemPrompt = await Promise.race([
       generateSystemPrompt(trainingData),
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('System prompt generation timeout')), 30000) // 30 second timeout
+        setTimeout(() => reject(new Error('System prompt generation timeout')), 120000) // 2 minute timeout
       )
     ])
     

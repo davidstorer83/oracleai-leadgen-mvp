@@ -272,6 +272,7 @@ export default function CoachesPage() {
                   </button>
                 </TableHead>
                 <TableHead className="text-white">Name</TableHead>
+                <TableHead className="text-white">Coach ID</TableHead>
                 <TableHead className="text-white">Channel</TableHead>
                 <TableHead className="text-white">Videos</TableHead>
                 <TableHead className="text-white">Status</TableHead>
@@ -304,6 +305,9 @@ export default function CoachesPage() {
                       {c.name}
                     </div>
                   </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <code className="text-xs bg-gray-800 px-2 py-1 rounded">{c.id}</code>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{c.channelName || c.channelUrl}</TableCell>
                   <TableCell className="text-muted-foreground">{c.videos?.length || 0}</TableCell>
                   <TableCell>
@@ -324,8 +328,8 @@ export default function CoachesPage() {
                         View Details
                       </a>
                       {c.status === 'READY' && (
-                        <a href={`/dashboard/chat/${c.id}`} className="text-sm text-primary hover:underline">
-                          Open Chat
+                        <a href={`/dashboard/chat/${c.id}`} className="text-sm text-primary hover:underline font-medium">
+                          💬 Chat
                         </a>
                       )}
                       

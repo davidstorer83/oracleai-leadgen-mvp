@@ -93,13 +93,15 @@ export function CreateCoachModal({
             />
           </div>
           <div className="grid gap-2">
-            <Label className="text-white">YouTube Channel ID</Label>
+            <Label className="text-white">YouTube Channel URL</Label>
             <Input
               value={channelUrl}
               onChange={(e) => setChannelUrl(e.target.value)}
-              placeholder="e.g., UCxxxxxxxxxxxxxx (or full URL)"
+              placeholder="e.g., https://www.youtube.com/@aliabdaal"
             />
-            <p className="text-xs text-muted-foreground">Find the channel ID in the YouTube channel's URL or About section</p>
+            <p className="text-xs text-muted-foreground">
+              Enter the full YouTube channel URL (e.g., https://www.youtube.com/@username)
+            </p>
           </div>
           <div className="grid gap-2">
             <Label className="text-white">Description (Optional)</Label>

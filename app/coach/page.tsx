@@ -26,7 +26,7 @@ export default async function PublicCoachesPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
@@ -54,35 +54,34 @@ export default async function PublicCoachesPage() {
               }
 
               return (
-                <Card key={coach.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="text-center">
+                <Card key={coach.id} className="hover:shadow-lg transition-shadow border border-gray-200">
+                  <CardHeader className="text-center bg-gray-50">
                     <div className="flex justify-center mb-4">
                       <Avatar 
                         src={coach.avatar || ''} 
-                        alt={coach.name} 
-                        fallback={coach.name}
-                        className="w-16 h-16"
-                        size="xl"
+                        alt={coach.name}
+                        fallback={coach.name.charAt(0)}
+                        className="w-16 h-16 border-2 border-white shadow-md"
                       />
                     </div>
-                    <CardTitle className="text-xl">{coach.name}</CardTitle>
-                    <CardDescription className="text-base">
+                    <CardTitle className="text-xl text-gray-900">{coach.name}</CardTitle>
+                    <CardDescription className="text-base text-gray-600">
                       {coach.channelName}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Stats */}
-                    <div className="flex justify-center gap-4 text-sm text-gray-600">
+                    <div className="flex justify-center gap-4 text-sm text-gray-700">
                       {metadata.subscriberCount && (
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          <span>{(metadata.subscriberCount / 1000000).toFixed(1)}M</span>
+                        <div className="flex items-center gap-1 bg-blue-100 px-2 py-1 rounded-full">
+                          <Users className="w-4 h-4 text-blue-600" />
+                          <span className="font-medium">{(metadata.subscriberCount / 1000000).toFixed(1)}M</span>
                         </div>
                       )}
                       {coach.videos.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Video className="w-4 h-4" />
-                          <span>{coach.videos.length}+ videos</span>
+                        <div className="flex items-center gap-1 bg-green-100 px-2 py-1 rounded-full">
+                          <Video className="w-4 h-4 text-green-600" />
+                          <span className="font-medium">{coach.videos.length}+ videos</span>
                         </div>
                       )}
                     </div>
@@ -107,8 +106,8 @@ export default async function PublicCoachesPage() {
 
                     {/* Action Buttons */}
                     <div className="space-y-2">
-                      <Link href={`/coach/${coach.shareableId}`} className="w-full">
-                        <Button className="w-full" size="sm">
+                      <Link href={`/coach/${coach.shareableId}/chat`} className="w-full">
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold" size="sm">
                           <MessageCircle className="w-4 h-4 mr-2" />
                           Chat with {coach.name}
                         </Button>
@@ -118,7 +117,7 @@ export default async function PublicCoachesPage() {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          className="w-full"
+                          className="w-full border-gray-300 hover:bg-gray-50 text-gray-700"
                           asChild
                         >
                           <a href={coach.channelUrl} target="_blank" rel="noopener noreferrer">

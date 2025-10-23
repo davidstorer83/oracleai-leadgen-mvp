@@ -100,8 +100,38 @@ export async function POST(req: Request) {
       content: msg.content,
     }))
 
-        // Get AI response
-        const response = await chatWithCoach(coachId, message, chatHistory)
+    // For new conversations, save the user message and get AI response
+    if (chatHistory.length === 0) {
+      // Save user message first
+      await prisma.message.create({
+        data: {
+          content: message,
+          role: 'USER',
+          chatId: chat.id,
+        },
+      })
+      
+      // Get AI response
+      const response = await chatWithCoach(coachId, message, [])
+      
+      // Save AI response
+      await prisma.message.create({
+        data: {
+          content: response,
+          role: 'ASSISTANT',
+          chatId: chat.id,
+        },
+      })
+
+      return NextResponse.json({ 
+        response, 
+        chatId: chat.id,
+        chatTitle: chat.title 
+      })
+    }
+
+    // Get AI response
+    const response = await chatWithCoach(coachId, message, chatHistory)
 
     // Save user message
     await prisma.message.create({

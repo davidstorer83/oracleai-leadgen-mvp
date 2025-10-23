@@ -1,53 +1,17 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { useParams } from "next/navigation"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Avatar } from "@/components/ui/avatar"
-import { Loader, ChatLoader, PageLoader } from "@/components/ui/loader"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { ChatLoader, Loader, PageLoader } from "@/components/ui/loader"
 import { ArrowLeft, Send } from "lucide-react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
+import { useEffect, useRef, useState } from "react"
 import ReactMarkdown from 'react-markdown'
 
 type Msg = { role: "user" | "assistant"; content: string }
 
-function createPersonalizedGreeting(coach: any): string {
-  const name = coach.name || "your coach"
-  const description = coach.description || ""
-  const channelName = coach.channelName || ""
-  const tone = coach.tone || "friendly, helpful, and knowledgeable"
-  
-  // Create a personalized greeting that sounds like the actual person
-  if (name.toLowerCase().includes('raj') && name.toLowerCase().includes('shamani')) {
-    return `Hi! I'm Raj Shamani 👋
-
-Welcome to this space — I believe the next 10 years are going to be India's Golden Age, full of once-in-a-lifetime opportunities. But here's the thing — if you don't prepare yourself to win these opportunities, you'll miss your shot at achieving your Indian Dream.
-
-And I'm not going to let that happen.
-
-This is my way of helping you learn, grow, and figure things out every single day — whether it's business, mindset, relationships, or life lessons from top leaders across the world.
-
-So whatever question you have — ask me.
-Let's figure it out together and build the life you dream of.`
-  }
-  
-  // Default greeting for other coaches - present as the real person
-  let greeting = `Hi! I'm ${name}. `
-  
-  if (description) {
-    greeting += `I love talking about ${description.toLowerCase()}. `
-  }
-  
-  if (channelName) {
-    greeting += `I'm passionate about sharing insights on ${channelName} and helping people grow. `
-  }
-  
-  greeting += `I'm ${tone} and always excited to chat about new ideas and experiences. What's on your mind?`
-  
-  return greeting
-}
 
 export default function ChatPage() {
   const params = useParams()
@@ -74,9 +38,12 @@ export default function ChatPage() {
         if (data.coach.status !== 'READY') {
           setMessages([{ role: "assistant", content: "This coach is not ready yet. Please wait for training to complete." }])
         } else {
-          // Create personalized greeting based on coach description and channel info
-          const personalizedGreeting = createPersonalizedGreeting(data.coach)
-          setMessages([{ role: "assistant", content: personalizedGreeting }])
+          // Show the natural intro message for the first time
+          const introMessage = `Hey there! I'm ${data.coach.name || data.coach.channelName} — a content creator who specializes in ${data.coach.description || 'educational content'} 😄
+
+So, what's something you've been thinking about lately?`
+          
+          setMessages([{ role: "assistant", content: introMessage }])
         }
       })
       .catch(error => {
@@ -169,13 +136,13 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto p-4 min-h-0">
         <div className="max-w-8xl mx-auto space-y-4">
           {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} p-2 normal-case`}>
               <div className={`max-w-[80%] rounded-lg p-4 ${
                 m.role === "user" 
                   ? "bg-primary text-primary-foreground" 
                   : "bg-muted text-muted-foreground"
               }`}>
-                <div className="prose prose-sm max-w-none leading-relaxed prose-headings:font-semibold prose-p:mb-3 prose-ul:mb-3 prose-ol:mb-3">
+                <div className="prose prose-sm max-w-none leading-relaxed prose-headings:font-semibold prose-p:mb-3 prose-ul:mb-3 prose-ol:mb-3 normal-case">
                   <ReactMarkdown>{m.content}</ReactMarkdown>
                 </div>
               </div>

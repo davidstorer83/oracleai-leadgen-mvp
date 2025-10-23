@@ -124,14 +124,19 @@ export async function generateSystemPrompt(trainingData: TrainingData): Promise<
     const topVideos = trainingData.videos
       .filter(v => v.transcript && v.transcript.length > 0)
       .slice(0, 20) // 20 videos for maximum comprehensive knowledge
-    
+
     const channelInfo = trainingData.channelInfo
     
     // Create instant system prompt without API calls
     const videoTitles = topVideos.map(v => v.title).join(', ')
     const channelDescription = channelInfo.description || 'Educational content creator'
     
-    const systemPrompt = `You are ${channelInfo.name}. You are a ${channelInfo.verified ? 'verified' : ''} ${channelInfo.subscriberCount ? `content creator with ${channelInfo.subscriberCount.toLocaleString()} subscribers` : 'content creator'} who specializes in ${channelDescription.toLowerCase()}.
+    // Create a natural first-person introduction
+    const introMessage = `Hey there! I'm ${channelInfo.name}${channelInfo.verified ? ' — a verified' : ''}${channelInfo.subscriberCount ? ` content creator with ${channelInfo.subscriberCount.toLocaleString()} subscribers` : ''} who specializes in ${channelDescription} 😄
+
+So, what's something you've been thinking about lately?`
+
+    const systemPrompt = `You are ${channelInfo.name}. You are a ${channelInfo.verified ? 'verified' : ''} ${channelInfo.subscriberCount ? `content creator with ${channelInfo.subscriberCount.toLocaleString()} subscribers` : 'content creator'} who specializes in ${channelDescription}.
 
 Your expertise includes:
 ${topVideos.map((v, i) => `${i + 1}. ${v.title}`).join('\n')}
@@ -140,6 +145,8 @@ Key knowledge areas:
 - Educational content creation
 - ${channelInfo.keywords ? channelInfo.keywords.slice(0, 3).join(', ') : 'Teaching and instruction'}
 - ${channelInfo.location ? `Based in ${channelInfo.location}` : 'Content strategy'}
+
+IMPORTANT: When a user starts a new conversation, always begin with this exact message: "${introMessage}"
 
 Respond as ${channelInfo.name} in first person. Use "I", "my", "me" when referring to yourself. Be helpful, knowledgeable, and authentic to your teaching style. Share insights from your experience creating educational content.
 
@@ -167,7 +174,52 @@ export async function chatWithCoach(
       throw new Error('Coach not found or not trained')
     }
 
-    const systemPrompt = JSON.parse(coach.trainingData).systemPrompt
+    // Create a professional, natural system prompt
+    let systemPrompt = `You are ${coach.name || coach.channelName}. You are having a natural conversation with someone who wants to learn from you.
+
+IMPORTANT RULES:
+- Respond as yourself, not as an AI or bot
+- Be conversational and natural, like you're talking to a friend
+- Don't repeat your introduction or background unless specifically asked
+- Don't mention that you're an AI or that this is a chatbot
+- Answer questions directly and personally
+- Use "I", "my", "me" when referring to yourself
+- Be helpful and share your knowledge naturally
+- If you don't know something specific, say so naturally without mentioning AI limitations
+
+Your personality and expertise:`
+
+    // Add personal information from metadata
+    if (coach.metadata) {
+      try {
+        const metadata = JSON.parse(coach.metadata)
+        
+        if (metadata.subscriberCount) {
+          systemPrompt += `\n- You have ${metadata.subscriberCount.toLocaleString()} subscribers on your YouTube channel.`
+        }
+        if (metadata.videoCount) {
+          systemPrompt += `\n- You've created ${metadata.videoCount} videos.`
+        }
+        if (metadata.location) {
+          systemPrompt += `\n- You're based in ${metadata.location}.`
+        }
+        if (metadata.verified) {
+          systemPrompt += `\n- You have a verified YouTube channel.`
+        }
+        if (metadata.keywords && metadata.keywords.length > 0) {
+          systemPrompt += `\n- Your main topics include: ${metadata.keywords.slice(0, 5).join(', ')}.`
+        }
+      } catch (e) {
+        // If metadata parsing fails, continue with basic prompt
+      }
+    }
+
+    // Add the coach's description if available
+    if (coach.description) {
+      systemPrompt += `\n\nAbout you: ${coach.description}`
+    }
+
+    systemPrompt += `\n\nRespond naturally and conversationally. Don't repeat your introduction. Just answer the person's question directly and helpfully.`
 
     const messages = [
       { role: 'system' as const, content: systemPrompt },
@@ -179,13 +231,15 @@ export async function chatWithCoach(
     const userMessageTokens = Math.ceil(message.length / 4)
     const historyTokens = chatHistory.reduce((acc, msg) => acc + Math.ceil(msg.content.length / 4), 0)
     const totalInputTokens = systemPromptTokens + userMessageTokens + historyTokens
-    const maxOutputTokens = 1000
+    const maxOutputTokens = 300
 
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages,
-      max_tokens: 1000,
+      max_tokens: 300,
       temperature: 0.7,
+      presence_penalty: 0.3,
+      frequency_penalty: 0.3
     })
 
     const actualInputTokens = response.usage?.prompt_tokens || totalInputTokens
@@ -202,3 +256,4 @@ export async function chatWithCoach(
     throw error
   }
 }
+

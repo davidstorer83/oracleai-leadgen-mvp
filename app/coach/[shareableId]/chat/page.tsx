@@ -51,10 +51,13 @@ export default function PublicChatPage() {
           const coachData = await response.json()
           setCoach(coachData)
           
-          // Add welcome message
+          // Add professional welcome message
+          const channelDescription = coachData.metadata?.channelInfo?.description || coachData.description || ''
+          const welcomeMessage = `Hey! I'm ${coachData.name}. I love talking about ${channelDescription ? channelDescription.substring(0, 100) + '...' : 'productivity, business, and personal development'}. What can I help you with today?`
+          
           setMessages([{
             id: '1',
-            content: `Hey there! Thanks for stopping by. I'm ${coachData.name} and I'm here to help you with any questions you might have. What's on your mind?`,
+            content: welcomeMessage,
             role: 'assistant',
             timestamp: new Date()
           }])
@@ -136,9 +139,9 @@ export default function PublicChatPage() {
 
   if (isLoadingCoach) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
           <p className="text-gray-600">Loading AI Coach...</p>
         </div>
       </div>
@@ -147,12 +150,12 @@ export default function PublicChatPage() {
 
   if (!coach) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Coach Not Found</h1>
           <p className="text-gray-600 mb-4">This AI coach is not available or has been removed.</p>
           <Link href="/">
-            <Button>Go Home</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700">Go Home</Button>
           </Link>
         </div>
       </div>
@@ -160,17 +163,15 @@ export default function PublicChatPage() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex flex-col justify-start">
+    <div className="h-screen bg-white flex flex-col justify-start">
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-sm border-b shadow-sm ">
+      <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href={`/coach/${shareableId}`}>
-                <Button variant="ghost" size="sm" className="bg-primary text-white hover:bg-primary/90">
+              <Link href={`/coach/${shareableId}`} className='text-gray-600  bg-primary hover:text-white rounded-md p-2 flex gap-2 items-center'>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back to Profile
-                </Button>
               </Link>
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -203,8 +204,8 @@ export default function PublicChatPage() {
       <div className="container mx-auto px-4 py-6 flex-1 min-h-0">
         <div className="max-w-6xl mx-auto h-full">
           {/* Chat Messages */}
-          <Card className="h-full flex flex-col shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-            <CardHeader className="py-4 bg-gradient-to-r from-blue-50 to-purple-50 flex-shrink-0">
+          <Card className="h-full flex flex-col shadow-lg border border-gray-200 bg-white">
+            <CardHeader className="py-4 bg-gray-50 flex-shrink-0">
               <CardTitle className="text-center text-xl font-bold text-gray-900">
                 Chat with {coach.name}
               </CardTitle>
@@ -279,7 +280,7 @@ export default function PublicChatPage() {
               </div>
 
               {/* Input Area */}
-              <div className="p-6 bg-gradient-to-r from-gray-50 to-blue-50 border-t flex-shrink-0">
+              <div className="p-6 bg-gray-50 border-t border-gray-200 flex-shrink-0">
                 <div className="flex gap-3">
                   <Input
                     value={input}
@@ -287,13 +288,13 @@ export default function PublicChatPage() {
                     onKeyPress={handleKeyPress}
                     placeholder="Ask me anything..."
                     disabled={isLoading}
-                    className="flex-1 h-12 rounded-xl border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-black"
+                    className="flex-1 h-12 rounded-xl border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-900"
                   />
                   <Button
                     onClick={sendMessage}
                     disabled={!input.trim() || isLoading}
                     size="icon"
-                    className="h-12 w-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg"
+                    className="h-12 w-12 rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg"
                   >
                     <Send className="w-5 h-5" />
                   </Button>

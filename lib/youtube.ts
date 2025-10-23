@@ -135,9 +135,22 @@ async function resolveChannelId(url: string): Promise<string | null> {
 // Get comprehensive channel information
 export async function getChannelInfo(channelUrl: string): Promise<YouTubeChannelInfo | null> {
   try {
-    const channelId = await resolveChannelId(channelUrl)
-    if (!channelId) {
-      throw new Error('Could not resolve channel ID from URL')
+    if (!process.env.YOUTUBE_API_KEY) {
+      throw new Error('YouTube API key is not configured')
+    }
+
+    let channelId = channelUrl.trim()
+    
+    // If it's already a channel ID (starts with UC), use it directly
+    if (channelId.startsWith('UC')) {
+      // Use the channel ID directly
+    } else {
+      // Try to resolve from URL or handle
+      const resolvedId = await resolveChannelId(channelUrl)
+      if (!resolvedId) {
+        throw new Error('Could not resolve channel ID from URL or handle')
+      }
+      channelId = resolvedId
     }
 
     // Get channel details with all available parts
@@ -158,6 +171,25 @@ export async function getChannelInfo(channelUrl: string): Promise<YouTubeChannel
     const statistics = channel.statistics
     const brandingSettings = channel.brandingSettings
     const status = channel.status
+
+    // Debug: Log the raw channel data
+    console.log('Raw channel data:', JSON.stringify({
+      snippet: snippet,
+      statistics: statistics,
+      brandingSettings: brandingSettings,
+      status: status
+    }, null, 2))
+
+    // Check if statistics are available
+    if (!statistics) {
+      console.warn('No statistics available from YouTube API - this might be due to privacy settings or API limitations')
+    } else {
+      console.log('Statistics available:', {
+        subscriberCount: statistics.subscriberCount,
+        videoCount: statistics.videoCount,
+        viewCount: statistics.viewCount
+      })
+    }
     
 
     // Get channel's uploads playlist to count videos
@@ -174,14 +206,14 @@ export async function getChannelInfo(channelUrl: string): Promise<YouTubeChannel
     // Extract all available links and contact information
     const extractedLinks = extractAllLinks(snippet.description || '', brandingSettings)
 
-    return {
+    const channelInfo = {
       id: channelId,
       title: snippet.title,
       description: snippet.description,
       thumbnail: snippet.thumbnails?.high?.url || snippet.thumbnails?.default?.url || '',
-      subscriberCount: parseInt(statistics.subscriberCount || '0'),
-      videoCount: parseInt(statistics.videoCount || '0'),
-      totalViews: parseInt(statistics.viewCount || '0'),
+      subscriberCount: statistics?.subscriberCount ? parseInt(statistics.subscriberCount) : 0,
+      videoCount: statistics?.videoCount ? parseInt(statistics.videoCount) : 0,
+      totalViews: statistics?.viewCount ? parseInt(statistics.viewCount) : 0,
       joinedDate: snippet.publishedAt,
       location: snippet.country || '',
       isMonetized: status?.isLinked || false,
@@ -197,6 +229,11 @@ export async function getChannelInfo(channelUrl: string): Promise<YouTubeChannel
       socialMedia: extractedLinks.socialMedia,
       businessInfo: extractedLinks.businessInfo,
     }
+
+    // Debug: Log the processed channel info
+    console.log('Processed channel info:', JSON.stringify(channelInfo, null, 2))
+
+    return channelInfo
   } catch (error) {
     throw new Error(`Failed to fetch channel info: ${error}`)
   }
@@ -205,9 +242,21 @@ export async function getChannelInfo(channelUrl: string): Promise<YouTubeChannel
 // Get channel videos with pagination
 export async function getChannelVideos(channelUrl: string, maxVideos: number = 50): Promise<YouTubeVideo[]> {
   try {
-    const channelId = await resolveChannelId(channelUrl)
-    if (!channelId) {
-      throw new Error('Could not resolve channel ID from URL')
+    if (!process.env.YOUTUBE_API_KEY) {
+      throw new Error('YouTube API key is not configured')
+    }
+
+    let channelId = channelUrl.trim()
+    
+    if (channelId.startsWith('UC')) {
+      // Use the channel ID directly
+    } else {
+      // Try to resolve from URL or handle
+      const resolvedId = await resolveChannelId(channelUrl)
+      if (!resolvedId) {
+        throw new Error('Could not resolve channel ID from URL or handle')
+      }
+      channelId = resolvedId
     }
 
     // Get uploads playlist ID
@@ -495,13 +544,21 @@ export async function getYouTubeChannelData(channelUrl: string, maxVideos: numbe
 
     const videos = await getChannelVideos(channelUrl, maxVideos)
     const videosWithTranscripts = []
-    const maxTranscripts = Math.min(50, videos.length) // Increased to 50 for maximum comprehensive knowledge
+    const maxTranscripts = Math.min(50, videos.length) // Process up to 50 videos for comprehensive training
     
     for (let i = 0; i < maxTranscripts; i++) {
       const video = videos[i]
+      
+      // Update progress for each video being processed
+      const progressPercent = Math.round(((i + 1) / maxTranscripts) * 100)
+      console.log(`Processing video ${i + 1}/${maxTranscripts} (${progressPercent}%) - ${video.title}`)
+      
       const transcript = await getVideoTranscriptWithRetry(video.id, 2)
       if (transcript) {
         videosWithTranscripts.push({ ...video, transcript })
+        console.log(`✅ Transcript extracted for: ${video.title}`)
+      } else {
+        console.log(`❌ No transcript found for: ${video.title}`)
       }
       
       if (i < maxTranscripts - 1) {

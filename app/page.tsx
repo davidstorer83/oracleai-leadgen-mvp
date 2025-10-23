@@ -2,7 +2,7 @@
 import React from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, PlayCircle, CheckCircle2 } from "lucide-react"
+import { ArrowRight, PlayCircle, CheckCircle2, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import HeroAnimated from "@/components/oracle/hero-animated"
 import TrustBar from "@/components/oracle/trust-bar"
@@ -20,8 +20,11 @@ export default function Page() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-white flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm text-gray-400">Loading...</p>
+        </div>
       </div>
     )
   }
