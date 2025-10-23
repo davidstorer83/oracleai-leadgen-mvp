@@ -59,9 +59,10 @@ export default async function PublicCoachesPage() {
                     <div className="flex justify-center mb-4">
                       <Avatar 
                         src={coach.avatar || ''} 
-                        alt={coach.name}
-                        fallback={coach.name.charAt(0)}
+                        alt={coach.name} 
+                        fallback={coach.name}
                         className="w-16 h-16"
+                        size="xl"
                       />
                     </div>
                     <CardTitle className="text-xl">{coach.name}</CardTitle>
