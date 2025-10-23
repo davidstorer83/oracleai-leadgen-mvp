@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar } from '@/components/ui/avatar'
 import { Share2, MessageCircle, ExternalLink, Users, Video, Calendar } from 'lucide-react'
 import Link from 'next/link'
 
@@ -67,12 +67,13 @@ export default async function PublicCoachPage({ params }: PublicCoachPageProps) 
             <Card className="sticky top-8">
               <CardHeader className="text-center">
                 <div className="flex justify-center mb-4">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src={coach.avatar || ''} alt={coach.name} />
-                    <AvatarFallback className="text-2xl">
-                      {coach.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <Avatar 
+                    src={coach.avatar || ''} 
+                    alt={coach.name} 
+                    fallback={coach.name}
+                    className="w-24 h-24"
+                    size="xl"
+                  />
                 </div>
                 <CardTitle className="text-2xl">{coach.name}</CardTitle>
                 <CardDescription className="text-lg">
