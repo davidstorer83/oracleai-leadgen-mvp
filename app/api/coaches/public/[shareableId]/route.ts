@@ -8,10 +8,10 @@ export async function GET(
   try {
     const { shareableId } = await params
 
+    // Find by shareableId first (findUnique only works with unique fields)
     const coach = await prisma.coach.findUnique({
       where: { 
-        shareableId,
-        isPublic: true
+        shareableId
       },
       select: {
         id: true,
@@ -20,14 +20,23 @@ export async function GET(
         avatar: true,
         description: true,
         metadata: true,
-        createdAt: true
+        createdAt: true,
+        isPublic: true
       }
     })
 
+    // Check if coach exists and is public
     if (!coach) {
       return NextResponse.json(
-        { error: 'Coach not found or not public' },
+        { error: 'Coach not found' },
         { status: 404 }
+      )
+    }
+
+    if (!coach.isPublic) {
+      return NextResponse.json(
+        { error: 'Coach is not public' },
+        { status: 403 }
       )
     }
 

@@ -63,7 +63,7 @@ export default function PublicChatPage() {
           }])
         }
       } catch (error) {
-        console.error('Failed to fetch coach:', error)
+        // Error fetching coach
       } finally {
         setIsLoadingCoach(false)
       }

@@ -172,24 +172,6 @@ export async function getChannelInfo(channelUrl: string): Promise<YouTubeChannel
     const brandingSettings = channel.brandingSettings
     const status = channel.status
 
-    // Debug: Log the raw channel data
-    console.log('Raw channel data:', JSON.stringify({
-      snippet: snippet,
-      statistics: statistics,
-      brandingSettings: brandingSettings,
-      status: status
-    }, null, 2))
-
-    // Check if statistics are available
-    if (!statistics) {
-      console.warn('No statistics available from YouTube API - this might be due to privacy settings or API limitations')
-    } else {
-      console.log('Statistics available:', {
-        subscriberCount: statistics.subscriberCount,
-        videoCount: statistics.videoCount,
-        viewCount: statistics.viewCount
-      })
-    }
     
 
     // Get channel's uploads playlist to count videos
@@ -230,8 +212,6 @@ export async function getChannelInfo(channelUrl: string): Promise<YouTubeChannel
       businessInfo: extractedLinks.businessInfo,
     }
 
-    // Debug: Log the processed channel info
-    console.log('Processed channel info:', JSON.stringify(channelInfo, null, 2))
 
     return channelInfo
   } catch (error) {
@@ -561,7 +541,6 @@ export async function getYouTubeChannelData(
       const video = videos[i]
       
       // Update progress immediately when starting to analyze each video
-      console.log(`Analyzing video ${i + 1}/${maxTranscripts} - ${video.title}`)
       if (onProgress) {
         await onProgress(i + 1, maxTranscripts) // Show current video being analyzed
       }
@@ -569,9 +548,6 @@ export async function getYouTubeChannelData(
       const transcript = await getVideoTranscriptWithRetry(video.id, 2)
       if (transcript) {
         videosWithTranscripts.push({ ...video, transcript })
-        console.log(`✅ Transcript extracted for: ${video.title}`)
-      } else {
-        console.log(`❌ No transcript found for: ${video.title}`)
       }
     }
 

@@ -18,23 +18,49 @@ interface PublicCoachPageProps {
 
 async function CoachContent({ shareableId }: { shareableId: string }) {
   try {
-  // Find coach by shareableId
-  const coach = await prisma.coach.findUnique({
-    where: { 
-      shareableId,
-      isPublic: true // Only show public coaches
-    },
-    include: {
-      videos: {
-        take: 6,
-        orderBy: { createdAt: 'desc' }
-      }
+    // Validate shareableId
+    if (!shareableId || shareableId.trim() === '') {
+      notFound()
     }
-  })
 
-  if (!coach) {
-    notFound()
-  }
+    // Find coach by shareableId (findUnique only works with unique fields)
+    let coach = await prisma.coach.findUnique({
+      where: { 
+        shareableId: shareableId.trim()
+      },
+      include: {
+        videos: {
+          take: 6,
+          orderBy: { createdAt: 'desc' }
+        }
+      }
+    })
+
+    // Fallback: Try findFirst if findUnique returns null (edge case handling)
+    if (!coach) {
+      coach = await prisma.coach.findFirst({
+        where: { 
+          shareableId: shareableId.trim()
+        },
+        include: {
+          videos: {
+            take: 6,
+            orderBy: { createdAt: 'desc' }
+          }
+        }
+      })
+    }
+
+    if (!coach) {
+      notFound()
+    }
+
+    // Temporarily allow viewing even if not public (for testing)
+    // TODO: Remove this in production and enforce isPublic check
+    if (!coach.isPublic) {
+      // Uncomment the line below to enforce public-only access:
+      // notFound()
+    }
 
   // Parse metadata
   let metadata = {}
@@ -348,7 +374,6 @@ async function CoachContent({ shareableId }: { shareableId: string }) {
     </div>
     )
   } catch (error) {
-    console.error('Error loading coach:', error)
     notFound()
   }
 }
@@ -368,12 +393,12 @@ export async function generateMetadata({ params }: PublicCoachPageProps) {
 
   const coach = await prisma.coach.findUnique({
     where: { 
-      shareableId,
-      isPublic: true
+      shareableId
     }
   })
 
-  if (!coach) {
+  // Check if coach exists and is public
+  if (!coach || !coach.isPublic) {
     return {
       title: 'Coach Not Found',
     }

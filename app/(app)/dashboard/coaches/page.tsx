@@ -83,7 +83,6 @@ export default function CoachesPage() {
           setSelectedCoaches([])
           mutate() // Refresh the data
         } catch (error) {
-          console.error('Error deleting coaches:', error)
           showDialog({
             title: 'Delete Failed',
             description: 'Failed to delete coaches. Please try again.',
@@ -123,7 +122,6 @@ export default function CoachesPage() {
 
           mutate() // Refresh the data
         } catch (error) {
-          console.error('Error deleting coach:', error)
           showDialog({
             title: 'Delete Failed',
             description: 'Failed to delete coach. Please try again.',
@@ -152,7 +150,7 @@ export default function CoachesPage() {
         setShareData(prev => ({ ...prev, [coachId]: data }))
       }
     } catch (error) {
-      console.error('Error fetching share data:', error)
+      // Error fetching share data
     }
   }
 
@@ -190,7 +188,6 @@ export default function CoachesPage() {
         })
       }
     } catch (error) {
-      console.error('Error toggling share status:', error)
       toast({
         title: "Network error",
         description: "Failed to update share status. Please check your connection and try again.",
@@ -202,23 +199,60 @@ export default function CoachesPage() {
   }
 
   const handleCopyShareLink = async (coachId: string) => {
-    const currentShareData = shareData[coachId]
-    if (currentShareData?.shareUrl) {
-      try {
+    try {
+      // Fetch share data if not already loaded
+      let currentShareData = shareData[coachId]
+      if (!currentShareData) {
+        await fetchShareData(coachId)
+        currentShareData = shareData[coachId]
+      }
+      
+      // Wait a bit for state to update
+      if (!currentShareData) {
+        // Try one more time after a short delay
+        await new Promise(resolve => setTimeout(resolve, 100))
+        currentShareData = shareData[coachId]
+      }
+      
+      if (currentShareData?.shareUrl) {
         await navigator.clipboard.writeText(currentShareData.shareUrl)
         toast({
           title: "Share link copied!",
           description: "The shareable link has been copied to your clipboard.",
           variant: "default"
         })
-      } catch (error) {
-        console.error('Error copying to clipboard:', error)
-        toast({
-          title: "Failed to copy link",
-          description: "Please copy the link manually from the share URL.",
-          variant: "destructive"
+      } else {
+        // Build share URL manually if API doesn't return it
+        const token = localStorage.getItem('auth-token')
+        const response = await fetch(`/api/coaches/${coachId}/share`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.shareUrl) {
+            await navigator.clipboard.writeText(data.shareUrl)
+            setShareData(prev => ({ ...prev, [coachId]: data }))
+            toast({
+              title: "Share link copied!",
+              description: "The shareable link has been copied to your clipboard.",
+              variant: "default"
+            })
+          } else {
+            throw new Error('Share URL not available')
+          }
+        } else {
+          throw new Error('Failed to fetch share data')
+        }
       }
+    } catch (error) {
+      toast({
+        title: "Failed to copy link",
+        description: "Please try again or copy the link manually.",
+        variant: "destructive"
+      })
     }
   }
   

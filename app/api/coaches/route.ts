@@ -221,9 +221,9 @@ export async function POST(req: Request) {
             type: 'coach_creator',
             channelUrl: channelUrl,
             channelInfo: {
-              subscriberCount: channelInfo.channelInfo.subscriberCount,
-              videoCount: channelInfo.channelInfo.videoCount,
-              description: channelInfo.channelInfo.description
+              subscriberCount: channelInfoOnly.subscriberCount,
+              videoCount: channelInfoOnly.videoCount,
+              description: channelInfoOnly.description
             },
             timestamp: new Date().toISOString()
           })
@@ -233,40 +233,40 @@ export async function POST(req: Request) {
       // Create lead for YouTube channel contact information
       await prisma.lead.create({
         data: {
-          email: `channel@${channelInfo.channelInfo.customUrl || channelInfo.channelInfo.id}.youtube.com`, // Placeholder email
-          name: channelInfo.channelInfo.title,
+          email: `channel@${channelInfoOnly.customUrl || channelInfoOnly.id}.youtube.com`, // Placeholder email
+          name: channelInfoOnly.title,
           source: 'youtube_channel',
           status: 'new',
-          notes: `YouTube Channel: ${channelInfo.channelInfo.title}`,
+          notes: `YouTube Channel: ${channelInfoOnly.title}`,
           coachId: coach.id,
           metadata: JSON.stringify({
             type: 'youtube_channel',
             channelUrl: channelUrl,
-            channelId: channelInfo.channelInfo.id,
+            channelId: channelInfoOnly.id,
             channelInfo: {
-              title: channelInfo.channelInfo.title,
-              description: channelInfo.channelInfo.description,
-              subscriberCount: channelInfo.channelInfo.subscriberCount,
-              videoCount: channelInfo.channelInfo.videoCount,
-              totalViews: channelInfo.channelInfo.totalViews,
-              thumbnail: channelInfo.channelInfo.thumbnail,
-              keywords: channelInfo.channelInfo.keywords,
-              socialLinks: channelInfo.channelInfo.socialLinks,
-              verified: channelInfo.channelInfo.verified,
-              isMonetized: channelInfo.channelInfo.isMonetized,
-              location: channelInfo.channelInfo.location,
-              joinedDate: channelInfo.channelInfo.joinedDate,
-              customUrl: channelInfo.channelInfo.customUrl,
-              country: channelInfo.channelInfo.country,
+              title: channelInfoOnly.title,
+              description: channelInfoOnly.description,
+              subscriberCount: channelInfoOnly.subscriberCount,
+              videoCount: channelInfoOnly.videoCount,
+              totalViews: channelInfoOnly.totalViews,
+              thumbnail: channelInfoOnly.thumbnail,
+              keywords: channelInfoOnly.keywords,
+              socialLinks: channelInfoOnly.socialLinks,
+              verified: channelInfoOnly.verified,
+              isMonetized: channelInfoOnly.isMonetized,
+              location: channelInfoOnly.location,
+              joinedDate: channelInfoOnly.joinedDate,
+              customUrl: channelInfoOnly.customUrl,
+              country: channelInfoOnly.country,
             // Contact information extracted from description
             contactInfo: {
-              emails: channelInfo.channelInfo.email || [],
-              phones: channelInfo.channelInfo.phone || [],
-              websites: channelInfo.channelInfo.website || [],
-              isBusiness: channelInfo.channelInfo.businessInfo?.isBusiness || false
+              emails: channelInfoOnly.email || [],
+              phones: channelInfoOnly.phone || [],
+              websites: channelInfoOnly.website || [],
+              isBusiness: channelInfoOnly.businessInfo?.isBusiness || false
             },
             // Social media links
-            socialMedia: channelInfo.channelInfo.socialMedia || {}
+            socialMedia: channelInfoOnly.socialMedia || {}
             },
             timestamp: new Date().toISOString()
           })
@@ -277,13 +277,12 @@ export async function POST(req: Request) {
     }
 
     // Start training process immediately with proper video count
-    startTrainingProcess(coach.id, maxVideosToAnalyze).catch(error => {
-      console.error('Training process failed:', error)
+    startTrainingProcess(coach.id, maxVideosToAnalyze).catch(() => {
+      // Training process failed silently in background
     })
 
     return NextResponse.json({ ok: true, coach })
   } catch (error) {
-    console.error('Coach creation error:', error)
     return NextResponse.json({ 
       error: 'Failed to create coach', 
       details: error instanceof Error ? error.message : 'Unknown error' 
@@ -407,11 +406,6 @@ export async function startTrainingProcess(coachId: string, maxVideos?: number) 
       )
     ])
 
-    // Debug: Log the YouTube data being fetched
-    console.log('YouTube data fetched:', JSON.stringify({
-      channelInfo: youtubeData.channelInfo,
-      videosCount: youtubeData.videos?.length || 0
-    }, null, 2))
     
     // Update progress after video analysis complete (move to 65%)
     await prisma.trainingJob.update({
@@ -439,8 +433,6 @@ export async function startTrainingProcess(coachId: string, maxVideos?: number) 
       country: youtubeData.channelInfo.country,
     }
 
-    // Debug: Log the channel metadata being saved
-    console.log('Saving channel metadata:', JSON.stringify(channelMetadata, null, 2))
 
     await prisma.coach.update({
       where: { id: coachId },
@@ -480,7 +472,7 @@ export async function startTrainingProcess(coachId: string, maxVideos?: number) 
       where: { id: trainingJob.id },
       data: { progress: 70 },
     })
-    
+
     // Note: Progress updates happen incrementally during video analysis above
 
     // Generate training data and system prompt (faster timeouts for professional experience)
