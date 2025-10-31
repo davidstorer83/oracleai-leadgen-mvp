@@ -39,7 +39,7 @@ export default function ChatPage() {
           setMessages([{ role: "assistant", content: "This coach is not ready yet. Please wait for training to complete." }])
         } else {
           // Show the natural intro message for the first time
-          const introMessage = `Hey there! I'm ${data.coach.name || data.coach.channelName} — a content creator who specializes in ${data.coach.description || 'educational content'} 😄
+          const introMessage = ` ${data.coach.description || 'educational content'} 😄
 
 So, what's something you've been thinking about lately?`
           

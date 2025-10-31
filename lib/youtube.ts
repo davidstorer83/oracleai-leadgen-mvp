@@ -535,23 +535,36 @@ function calculateAverageVideoLength(videos: YouTubeVideo[]): string {
 }
 
 // Main function to get comprehensive YouTube data
-export async function getYouTubeChannelData(channelUrl: string, maxVideos: number = 50): Promise<YouTubeDataSummary> {
+export async function getYouTubeChannelData(
+  channelUrl: string,
+  maxVideos: number = 50,
+  onProgress?: (processed: number, total: number) => Promise<void> | void
+): Promise<YouTubeDataSummary> {
   try {
     const channelInfo = await getChannelInfo(channelUrl)
     if (!channelInfo) {
       throw new Error('Failed to fetch channel information')
     }
 
-    const videos = await getChannelVideos(channelUrl, maxVideos)
+    // Determine how many videos to analyze: if channel has more than 50, analyze latest 50; otherwise analyze all
+    const videosToAnalyze = Math.min(maxVideos, channelInfo.videoCount || maxVideos)
+    const videos = await getChannelVideos(channelUrl, videosToAnalyze)
     const videosWithTranscripts = []
-    const maxTranscripts = Math.min(50, videos.length) // Process up to 50 videos for comprehensive training
+    
+    // Process all fetched videos (not just 20) for better training data
+    const maxTranscripts = videos.length
+    if (onProgress) {
+      await onProgress(0, maxTranscripts)
+    }
     
     for (let i = 0; i < maxTranscripts; i++) {
       const video = videos[i]
       
-      // Update progress for each video being processed
-      const progressPercent = Math.round(((i + 1) / maxTranscripts) * 100)
-      console.log(`Processing video ${i + 1}/${maxTranscripts} (${progressPercent}%) - ${video.title}`)
+      // Update progress immediately when starting to analyze each video
+      console.log(`Analyzing video ${i + 1}/${maxTranscripts} - ${video.title}`)
+      if (onProgress) {
+        await onProgress(i + 1, maxTranscripts) // Show current video being analyzed
+      }
       
       const transcript = await getVideoTranscriptWithRetry(video.id, 2)
       if (transcript) {
@@ -559,10 +572,6 @@ export async function getYouTubeChannelData(channelUrl: string, maxVideos: numbe
         console.log(`✅ Transcript extracted for: ${video.title}`)
       } else {
         console.log(`❌ No transcript found for: ${video.title}`)
-      }
-      
-      if (i < maxTranscripts - 1) {
-        await new Promise(resolve => setTimeout(resolve, 2000))
       }
     }
 

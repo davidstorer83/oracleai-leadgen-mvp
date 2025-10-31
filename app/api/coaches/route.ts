@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getYouTubeChannelData, extractChannelId } from "@/lib/youtube"
+import { getYouTubeChannelData, extractChannelId, getChannelInfo } from "@/lib/youtube"
 import { createTrainingData, generateSystemPrompt } from "@/lib/openai"
 import { verifyToken } from "@/lib/auth"
 
@@ -159,12 +159,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'YouTube API key is not configured' }, { status: 500 })
     }
 
-    // Use the channel URL directly - no need to extract or convert
-    const channelInfo = await getYouTubeChannelData(channelUrl, 1)
+    // Get channel information first (without videos for speed)
+    const channelInfoOnly = await getChannelInfo(channelUrl)
 
-    if (!channelInfo || !channelInfo.channelInfo) {
+    if (!channelInfoOnly) {
       return NextResponse.json({ error: 'Could not fetch channel information' }, { status: 400 })
     }
+
+    // Determine max videos: if channel has more than 50, analyze latest 50; otherwise analyze all
+    const videoCount = channelInfoOnly.videoCount || 0
+    const maxVideosToAnalyze = videoCount > 50 ? 50 : Math.max(videoCount, 10) // At least 10 for training
 
     const coach = await prisma.coach.create({
       data: {
@@ -172,26 +176,26 @@ export async function POST(req: Request) {
         email,
         description,
         channelUrl,
-        channelId: channelInfo.channelInfo.id,
-        channelName: channelInfo.channelInfo.title,
-        avatar: channelInfo.channelInfo.thumbnail,
+        channelId: channelInfoOnly.id,
+        channelName: channelInfoOnly.title,
+        avatar: channelInfoOnly.thumbnail,
         tone,
         creativityLevel,
-        status: 'PENDING',
+        status: 'TRAINING', // Start as TRAINING immediately
         userId: user.id,
         shareableId: crypto.randomUUID(), // Generate unique shareable ID
         isPublic: false, // Default to private
         metadata: JSON.stringify({
-          subscriberCount: channelInfo.channelInfo.subscriberCount,
-          videoCount: channelInfo.channelInfo.videoCount,
-          thumbnail: channelInfo.channelInfo.thumbnail,
-          keywords: channelInfo.channelInfo.keywords || [],
-          socialLinks: channelInfo.channelInfo.socialLinks || [],
-          verified: channelInfo.channelInfo.verified || false,
-          isMonetized: channelInfo.channelInfo.isMonetized || false,
-          location: channelInfo.channelInfo.location || '',
-          joinedDate: channelInfo.channelInfo.joinedDate || '',
-          totalViews: channelInfo.channelInfo.totalViews || 0,
+          subscriberCount: channelInfoOnly.subscriberCount,
+          videoCount: channelInfoOnly.videoCount,
+          thumbnail: channelInfoOnly.thumbnail,
+          keywords: channelInfoOnly.keywords || [],
+          socialLinks: channelInfoOnly.socialLinks || [],
+          verified: channelInfoOnly.verified || false,
+          isMonetized: channelInfoOnly.isMonetized || false,
+          location: channelInfoOnly.location || '',
+          joinedDate: channelInfoOnly.joinedDate || '',
+          totalViews: channelInfoOnly.totalViews || 0,
           scrapedAt: new Date().toISOString()
         })
       },
@@ -272,8 +276,8 @@ export async function POST(req: Request) {
       // Don't fail coach creation if lead creation fails
     }
 
-    // Start training process immediately
-      startTrainingProcess(coach.id).catch(error => {
+    // Start training process immediately with proper video count
+    startTrainingProcess(coach.id, maxVideosToAnalyze).catch(error => {
       console.error('Training process failed:', error)
     })
 
@@ -330,40 +334,76 @@ export async function DELETE(req: Request) {
   }
 }
 
-export async function startTrainingProcess(coachId: string) {
+export async function startTrainingProcess(coachId: string, maxVideos?: number) {
   try {
-    // Create training job
-    const trainingJob = await prisma.trainingJob.create({
-      data: {
-        coachId,
-        status: 'PENDING',
-      },
-    })
-
-    // Update coach status
-    await prisma.coach.update({
-      where: { id: coachId },
-      data: { status: 'TRAINING' },
-    })
-
-    // Get coach data
+    // Get coach data first to get video count from metadata
     const coach = await prisma.coach.findUnique({
       where: { id: coachId },
     })
 
     if (!coach) return
 
-    // Update job status
-    await prisma.trainingJob.update({
-      where: { id: trainingJob.id },
-      data: { status: 'RUNNING', startedAt: new Date(), progress: 10 },
+    // Parse metadata to get video count
+    let videoCount = maxVideos || 50
+    try {
+      const metadata = JSON.parse(coach.metadata || '{}')
+      const channelVideoCount = metadata.videoCount || 0
+      // If channel has more than 50 videos, analyze latest 50; otherwise analyze all (but cap at 50)
+      if (channelVideoCount > 0) {
+        videoCount = channelVideoCount > 50 ? 50 : channelVideoCount
+      }
+    } catch (e) {
+      // Use default if metadata parsing fails
+    }
+
+    // Create training job with initial status showing we're analyzing videos
+    const trainingJob = await prisma.trainingJob.create({
+      data: {
+        coachId,
+        status: 'RUNNING',
+        startedAt: new Date(),
+        progress: 5,
+        videosProcessed: 0,
+        videosTotal: videoCount,
+      },
     })
 
-    // Fetch comprehensive YouTube channel data
+    // Update coach status if not already TRAINING
+    if (coach.status !== 'TRAINING') {
+      await prisma.coach.update({
+        where: { id: coachId },
+        data: { status: 'TRAINING' },
+      })
+    }
+
+    // Fetch comprehensive YouTube channel data with progress updates
+    // Progress callback updates incrementally as each video is analyzed
     const youtubeData = await Promise.race([
-      getYouTubeChannelData(coach.channelUrl, 50), // Process up to 50 videos for comprehensive training
+      getYouTubeChannelData(
+        coach.channelUrl,
+        videoCount,
+        async (processed, total) => {
+          try {
+            // Update progress incrementally: 5% base + 55% for video analysis (60% total)
+            const analysisProgress = total > 0 ? Math.round((processed / total) * 55) : 0
+            const progress = Math.min(60, Math.max(5, 5 + analysisProgress))
+            
+            await prisma.trainingJob.update({
+              where: { id: trainingJob.id },
+              data: {
+                videosProcessed: processed,
+                videosTotal: total,
+                progress,
+                status: 'RUNNING'
+              }
+            })
+          } catch (e) {
+            // ignore progress update errors
+          }
+        }
+      ),
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('YouTube data fetching timeout')), 900000) // 15 minute timeout for 50 videos
+        setTimeout(() => reject(new Error('YouTube data fetching timeout')), 900000) // 15 minute timeout
       )
     ])
 
@@ -373,10 +413,14 @@ export async function startTrainingProcess(coachId: string) {
       videosCount: youtubeData.videos?.length || 0
     }, null, 2))
     
-    
+    // Update progress after video analysis complete (move to 65%)
     await prisma.trainingJob.update({
       where: { id: trainingJob.id },
-      data: { progress: 30 },
+      data: { 
+        progress: 65, 
+        videosTotal: youtubeData.videos.length,
+        videosProcessed: youtubeData.videos.length,
+      },
     })
 
     // Save channel metadata
@@ -436,12 +480,19 @@ export async function startTrainingProcess(coachId: string) {
       where: { id: trainingJob.id },
       data: { progress: 70 },
     })
+    
+    // Note: Progress updates happen incrementally during video analysis above
 
-    // Generate training data and system prompt
+    // Generate training data and system prompt (faster timeouts for professional experience)
+    await prisma.trainingJob.update({
+      where: { id: trainingJob.id },
+      data: { progress: 75 },
+    })
+    
     const trainingData = await Promise.race([
       createTrainingData(coachId),
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Training data generation timeout')), 300000) // 5 minute timeout for 50 videos
+        setTimeout(() => reject(new Error('Training data generation timeout')), 240000) // 4 minute timeout
       )
     ])
     
@@ -449,11 +500,15 @@ export async function startTrainingProcess(coachId: string) {
       throw new Error("Failed to generate training data. Ensure OpenAI API is configured and working.")
     }
     
+    await prisma.trainingJob.update({
+      where: { id: trainingJob.id },
+      data: { progress: 85 },
+    })
     
     const systemPrompt = await Promise.race([
       generateSystemPrompt(trainingData),
       new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('System prompt generation timeout')), 120000) // 2 minute timeout
+        setTimeout(() => reject(new Error('System prompt generation timeout')), 90000) // 1.5 minute timeout
       )
     ])
     
@@ -485,6 +540,8 @@ export async function startTrainingProcess(coachId: string) {
       data: {
         status: 'COMPLETED',
         progress: 100,
+        videosProcessed: youtubeData.videos.length,
+        videosTotal: youtubeData.videos.length,
         completedAt: new Date(),
       },
     })

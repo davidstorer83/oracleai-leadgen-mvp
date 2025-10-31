@@ -309,7 +309,9 @@ export default function CoachesPage() {
                     <code className="text-xs bg-gray-800 px-2 py-1 rounded">{c.id}</code>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{c.channelName || c.channelUrl}</TableCell>
-                  <TableCell className="text-muted-foreground">{c.videos?.length || 0}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <CoachVideosCell coach={c} />
+                  </TableCell>
                   <TableCell>
                     <span className={`rounded-full text-xs px-2 py-1 ${
                       c.status === 'READY' ? 'bg-green-500/10 text-green-500' :
@@ -411,4 +413,19 @@ export default function CoachesPage() {
       )}
     </div>
   )
+}
+
+function CoachVideosCell({ coach }: { coach: any }) {
+  const { data } = useSWR(coach.status === 'TRAINING' ? `/api/coaches/${coach.id}/training` : null, fetcher, { refreshInterval: 2000 })
+  const latestJob = data?.trainingJobs?.[0]
+  if (coach.status === 'TRAINING' && latestJob) {
+    const processed = latestJob.videosProcessed ?? 0
+    const total = latestJob.videosTotal ?? (coach.videos?.length || 0)
+    return (
+      <span className="text-yellow-400">
+        {processed}/{total} analyzed
+      </span>
+    )
+  }
+  return <>{coach.videos?.length || 0}</>
 }
