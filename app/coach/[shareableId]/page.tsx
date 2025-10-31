@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +10,7 @@ import { LoadingSpinner } from '@/components/oracle/loading-spinner'
 import { MessageCircle, ExternalLink, Users, Video, Calendar } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
+import { getBaseUrl } from '@/lib/utils'
 
 interface PublicCoachPageProps {
   params: Promise<{
@@ -72,8 +74,11 @@ async function CoachContent({ shareableId }: { shareableId: string }) {
     // Ignore parsing errors
   }
 
-  const shareUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/coach/${shareableId}`
-    const chatUrl = `/coach/${shareableId}/chat`
+  // Get base URL from headers
+  const headersList = await headers()
+  const baseUrl = getBaseUrl({ headers: headersList })
+  const shareUrl = `${baseUrl}/coach/${shareableId}`
+  const chatUrl = `/coach/${shareableId}/chat`
 
   return (
     <div className="min-h-screen bg-gray-50">

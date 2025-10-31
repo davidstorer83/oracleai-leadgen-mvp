@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyToken } from '@/lib/auth'
+import { getBaseUrl } from '@/lib/utils'
 
 async function getCurrentUser(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -47,7 +48,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Coach not found' }, { status: 404 })
     }
 
-    const shareUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/coach/${coach.shareableId}`
+    const baseUrl = getBaseUrl(req)
+    const shareUrl = `${baseUrl}/coach/${coach.shareableId}`
 
     return NextResponse.json({
       shareableId: coach.shareableId,
@@ -93,7 +95,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       data: { isPublic: Boolean(isPublic) }
     })
 
-    const shareUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/coach/${coach.shareableId}`
+    const baseUrl = getBaseUrl(req)
+    const shareUrl = `${baseUrl}/coach/${updatedCoach.shareableId}`
 
     return NextResponse.json({
       shareableId: updatedCoach.shareableId,
